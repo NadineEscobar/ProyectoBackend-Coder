@@ -1,0 +1,41 @@
+[
+  {
+    "id": "01",
+    "title": "Mockup para Iphone X",
+    "description": "Un mockup realista de un iPhone X para mostrar tus aplicaciones o diseños móviles.",
+    "code": "SAH001",
+    "price": 15,
+    "status": true,
+    "stock": 20,
+    "category": "Iphone",
+    "thumbnails": [
+      "https://res.cloudinary.com/dgy7rqtqn/image/upload/v1750539911/Captura_de_pantalla_21-6-2025_18417_www.ls.graphics_yatola.jpg"
+    ]
+  },
+  {
+    "id": "02",
+    "title": "Mockup de Letrero de Oficina",
+    "description": "Un mockup de un letrero de puerta de vidrio horizontal colocado en la pared de una oficina.",
+    "code": "JOY001",
+    "price": 12,
+    "status": true,
+    "stock": 10,
+    "category": "Letreros y Publicidad",
+    "thumbnails": [
+      "https://res.cloudinary.com/dgy7rqtqn/image/upload/v1754510629/letrero_ensqxi.jpg"
+    ]
+  },
+  {
+    "id": "1",
+    "title": "Mockup de Libro",
+    "description": "Un mockup de un libro con un diseño colorido.",
+    "code": "SAH002",
+    "price": 29,
+    "status": true,
+    "stock": 20,
+    "category": "Papel y Libro",
+    "thumbnails": [
+      "https://res.cloudinary.com/dgy7rqtqn/image/upload/v1754508059/libro_wifmst.jpg"
+    ]
+  }
+]
