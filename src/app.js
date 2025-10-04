@@ -3,13 +3,17 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const exphbs = require("express-handlebars");
 const path = require("path");
+const connectDB = require("./db"); 
+
+connectDB();
 
 const productsRouter = require("./routes/products.router");
 const cartsRouter = require("./routes/carts.router");
 const viewsRouter = require("./routes/views.router");
 
+
 const ProductManager = require("./managers/ProductManager");
-const productManager = new ProductManager("./data/products.json");
+const productManager = new ProductManager();
 
 const app = express();
 const httpServer = createServer(app);
@@ -25,7 +29,7 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 app.engine("handlebars", exphbs.engine());
 app.set("view engine", "handlebars");
-app.set("views", path.join(__dirname, "../views"));
+app.set("views", path.join(__dirname, "views"));
 
 
 app.use("/api/products", productsRouter);

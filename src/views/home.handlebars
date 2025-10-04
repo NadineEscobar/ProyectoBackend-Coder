@@ -1,0 +1,57 @@
+<h1>Productos</h1>
+
+<form method="GET" action="/" class="filter-form">
+  <label>
+    Categoría:
+    <select name="query">
+      <option value="">Todas</option>
+      <option value="category:Iphone">Iphone</option>
+      <option value="category:Letreros y Publicidad">Letreros y Publicidad</option>
+      <option value="category:Papel y Libro">Papel y Libro</option>
+    </select>
+  </label>
+
+  <label>
+    Ordenar por precio:
+    <select name="sort">
+      <option value="">Sin ordenar</option>
+      <option value="asc">Ascendente</option>
+      <option value="desc">Descendente</option>
+    </select>
+  </label>
+
+  <button type="submit">Filtrar</button>
+</form>
+
+<div class="product-list">
+  {{#each products}}
+    <div class="product-card">
+      {{#if this.thumbnails.[0]}}
+        <img src="{{this.thumbnails.[0]}}" alt="{{this.title}}" class="product-image" />
+      {{else}}
+        <p>No hay imagen disponible</p>
+      {{/if}}
+
+      <h3>{{this.title}}</h3>
+      <p>Precio: ${{this.price}}</p>
+      <p>{{this.description}}</p>
+
+      <a href="/products/{{this._id}}">Ver detalle</a>
+      <button data-id="{{this._id}}" class="add-to-cart">Agregar al carrito</button>
+    </div>
+  {{/each}}
+</div>
+
+<div class="pagination">
+  {{#if pagination.hasPrevPage}}
+    <a href="{{pagination.prevLink}}">Anterior</a>
+  {{/if}}
+  <span>Página {{pagination.page}} / {{pagination.totalPages}}</span>
+  {{#if pagination.hasNextPage}}
+    <a href="{{pagination.nextLink}}">Siguiente</a>
+  {{/if}}
+</div>
+
+<script src="/js/cart-client.js"></script>
+
+

@@ -1,66 +1,93 @@
-const fs = require("fs").promises;
-const crypto = require("crypto");
+const Product = require("../models/Product.model");
 
 class ProductManager {
-  constructor(filePath) {
-    this.filePath = filePath;
-  }
-
-  async #readFile() {
+  
+  async getProducts(options = {}) {
     try {
-      const data = await fs.readFile(this.filePath, "utf8");
-      return JSON.parse(data);
-    } catch (error) {
-      if (error.code === "ENOENT") {
-        await this.#saveFile([]);
-        return [];
+      const limit = Number(options.limit) || 10;
+      const page = Number(options.page) || 1;
+      const sortParam = options.sort;
+      const query = options.query; 
+
+      
+      const filter = {};
+      if (query) {
+        const [key, ...rest] = query.split(":");
+        const value = rest.join(":");
+        if (key === "category") filter.category = value;
+        else if (key === "status") filter.status = (value === "true");
+        else if (key === "title") filter.title = { $regex: value, $options: "i" }; 
       }
-      throw error;
+
+      
+      const sort = {};
+      if (sortParam === "asc") sort.price = 1;
+      else if (sortParam === "desc") sort.price = -1;
+
+      
+      const optionsPaginate = { page, limit, lean: true };
+      if (Object.keys(sort).length) optionsPaginate.sort = sort;
+
+      const result = await Product.paginate(filter, optionsPaginate);
+      return {
+        status: "success",
+        payload: result.docs,
+        totalPages: result.totalPages,
+        prevPage: result.hasPrevPage ? result.prevPage : null,
+        nextPage: result.hasNextPage ? result.nextPage : null,
+        page: result.page,
+        hasPrevPage: result.hasPrevPage,
+        hasNextPage: result.hasNextPage,
+        prevLink: result.hasPrevPage ? `/?${new URLSearchParams({ ...options, page: result.prevPage }).toString()}` : null,
+        nextLink: result.hasNextPage ? `/?${new URLSearchParams({ ...options, page: result.nextPage }).toString()}` : null
+      };
+    } catch (error) {
+      console.error("❌ Error en getProducts:", error);
+      return { status: "error", error: error.message };
     }
   }
 
-  async #saveFile(data) {
-    await fs.writeFile(this.filePath, JSON.stringify(data, null, 2), "utf8");
-  }
-
-  #generateId() {
-    return crypto.randomUUID();
-  }
-
-  async getProducts() {
-    return await this.#readFile();
-  }
-
+  
   async getProductById(id) {
-    const products = await this.#readFile();
-    return products.find((p) => p.id === id);
+    try {
+      return await Product.findById(id).lean();
+    } catch (error) {
+      console.error("❌ Error en getProductById:", error);
+      return null;
+    }
   }
 
+ 
   async addProduct(productData) {
-    const products = await this.#readFile();
-    const newProduct = { id: this.#generateId(), ...productData };
-    products.push(newProduct);
-    await this.#saveFile(products);
-    return newProduct;
+    try {
+      const created = await Product.create(productData);
+      return created.toObject();
+    } catch (error) {
+      console.error("❌ Error en addProduct:", error);
+      return null;
+    }
   }
 
-  async updateProduct(id, updatedFields) {
-    const products = await this.#readFile();
-    const index = products.findIndex((p) => p.id === id);
-    if (index === -1) return null;
-
-    products[index] = { ...products[index], ...updatedFields, id };
-    await this.#saveFile(products);
-    return products[index];
+  
+  async updateProduct(id, updates) {
+    try {
+      const updated = await Product.findByIdAndUpdate(id, updates, { new: true, runValidators: true }).lean();
+      return updated;
+    } catch (error) {
+      console.error("❌ Error en updateProduct:", error);
+      return null;
+    }
   }
 
+ 
   async deleteProduct(id) {
-    const products = await this.#readFile();
-    const filtered = products.filter((p) => p.id !== id);
-    if (filtered.length === products.length) return false;
-
-    await this.#saveFile(filtered);
-    return true;
+    try {
+      const removed = await Product.findByIdAndDelete(id);
+      return !!removed;
+    } catch (error) {
+      console.error("❌ Error en deleteProduct:", error);
+      return false;
+    }
   }
 }
 

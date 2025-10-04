@@ -1,59 +1,99 @@
-const fs = require("fs").promises;
-const crypto = require("crypto");
+const Cart = require("../models/Cart.model");
 
 class CartManager {
-  constructor(filePath) {
-    this.filePath = filePath;
-  }
-
-  async #readFile() {
-    try {
-      const data = await fs.readFile(this.filePath, "utf8");
-      return JSON.parse(data);
-    } catch (error) {
-      if (error.code === "ENOENT") {
-        await this.#saveFile([]);
-        return [];
-      }
-      throw error;
-    }
-  }
-
-  async #saveFile(data) {
-    await fs.writeFile(this.filePath, JSON.stringify(data, null, 2), "utf8");
-  }
-
-  #generateId() {
-    return crypto.randomUUID();
-  }
-
   async createCart() {
-    const carts = await this.#readFile();
-    const newCart = { id: this.#generateId(), products: [] };
-    carts.push(newCart);
-    await this.#saveFile(carts);
-    return newCart;
+    try {
+      const newCart = await Cart.create({ products: [] });
+      return await Cart.findById(newCart._id).populate("products.product").lean();
+    } catch (err) {
+      throw new Error("Error al crear carrito: " + err.message);
+    }
   }
 
   async getCartById(id) {
-    const carts = await this.#readFile();
-    return carts.find((c) => c.id === id);
+    try {
+      return await Cart.findById(id).populate("products.product").lean();
+    } catch (err) {
+      throw new Error("Error al obtener carrito: " + err.message);
+    }
   }
 
-  async addProductToCart(cartId, productId) {
-    const carts = await this.#readFile();
-    const cart = carts.find((c) => c.id === cartId);
-    if (!cart) return null;
+  async addProductToCart(cartId, productId, qty = 1) {
+    try {
+      const cart = await Cart.findById(cartId);
+      if (!cart) return null;
 
-    const existingProduct = cart.products.find((p) => p.product === productId);
-    if (existingProduct) {
-      existingProduct.quantity += 1;
-    } else {
-      cart.products.push({ product: productId, quantity: 1 });
+      const item = cart.products.find(p => p.product.toString() === productId);
+      if (item) {
+        item.quantity += Number(qty || 1);
+      } else {
+        cart.products.push({ product: productId, quantity: Number(qty || 1) });
+      }
+
+      await cart.save();
+      return await Cart.findById(cartId).populate("products.product").lean();
+    } catch (err) {
+      throw new Error("Error al agregar producto al carrito: " + err.message);
     }
+  }
 
-    await this.#saveFile(carts);
-    return cart;
+  async removeProductFromCart(cartId, productId) {
+    try {
+      const cart = await Cart.findById(cartId);
+      if (!cart) return null;
+
+      cart.products = cart.products.filter(p => p.product.toString() !== productId);
+      await cart.save();
+
+      return await Cart.findById(cartId).populate("products.product").lean();
+    } catch (err) {
+      throw new Error("Error al eliminar producto del carrito: " + err.message);
+    }
+  }
+
+  async replaceCartProducts(cartId, productsArray) {
+    try {
+      const cart = await Cart.findById(cartId);
+      if (!cart) return null;
+
+      cart.products = productsArray;
+      await cart.save();
+
+      return await Cart.findById(cartId).populate("products.product").lean();
+    } catch (err) {
+      throw new Error("Error al reemplazar productos del carrito: " + err.message);
+    }
+  }
+
+  async updateProductQuantity(cartId, productId, quantity) {
+    try {
+      const cart = await Cart.findById(cartId);
+      if (!cart) return null;
+
+      const item = cart.products.find(p => p.product.toString() === productId);
+      if (!item) return null;
+
+      item.quantity = Number(quantity);
+      await cart.save();
+
+      return await Cart.findById(cartId).populate("products.product").lean();
+    } catch (err) {
+      throw new Error("Error al actualizar cantidad del producto: " + err.message);
+    }
+  }
+
+  async emptyCart(cartId) {
+    try {
+      const cart = await Cart.findById(cartId);
+      if (!cart) return null;
+
+      cart.products = [];
+      await cart.save();
+
+      return await Cart.findById(cartId).populate("products.product").lean();
+    } catch (err) {
+      throw new Error("Error al vaciar carrito: " + err.message);
+    }
   }
 }
 
